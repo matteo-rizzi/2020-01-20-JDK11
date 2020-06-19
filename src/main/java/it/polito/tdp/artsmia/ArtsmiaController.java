@@ -1,8 +1,10 @@
 package it.polito.tdp.artsmia;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.artsmia.model.Artist;
 import it.polito.tdp.artsmia.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -31,7 +33,7 @@ public class ArtsmiaController {
     private Button btnCalcolaPercorso;
 
     @FXML
-    private ComboBox<?> boxRuolo;
+    private ComboBox<String> boxRuolo;
 
     @FXML
     private TextField txtArtista;
@@ -42,23 +44,51 @@ public class ArtsmiaController {
     @FXML
     void doArtistiConnessi(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Calcola artisti connessi");
+    	if(this.model.getArtistConnessi() == null) {
+    		txtResult.appendText("Devi prima creare il grafo!\n");
+    		return;
+    	}
+    	txtResult.appendText(this.model.getArtistConnessi());
     }
 
     @FXML
     void doCalcolaPercorso(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Calcola percorso");
+    	try {
+    		int id = Integer.parseInt(this.txtArtista.getText());
+    		if(!model.contieneArtista(id)) {
+    			this.txtResult.appendText("Errore! L'id selezionato non è associato ad alcuna artista!");
+    			return;
+    		}
+    		List<Artist> best = this.model.ricorsione(id);
+    		this.txtResult.appendText("Il cammino più lungo è composto dai seguenti artisti:\n");
+    		for(int i = 1; i <= best.size(); i++) {
+    			this.txtResult.appendText("Artista " + i + ": " + best.get(i - 1) + "\n");
+    		}
+    		this.txtResult.appendText("Il numero di esposizioni è : " + model.getNumeroEsposizioni());
+    		
+    	} catch(NumberFormatException nfe) {
+    		txtResult.setText("Errore! Devi inserire un valore numerico che rappresenti l'id dell'artista!\n");
+    		return;
+    	}
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Crea grafo");
+    	String ruolo = this.boxRuolo.getValue();
+    	if(ruolo == null) {
+    		txtResult.appendText("Errore! Non hai selezionato alcun ruolo!\n");
+    		return;
+    	}
+    	this.model.creaGrafo(ruolo);
+    	this.txtResult.appendText(String.format("Grafo creato! Sono presenti %d VERTICI e %d ARCHI", this.model.nVertici(), this.model.nArchi()));
+    	
     }
 
     public void setModel(Model model) {
     	this.model = model;
+    	this.boxRuolo.getItems().addAll(this.model.getRoles());
     }
 
     
@@ -72,4 +102,5 @@ public class ArtsmiaController {
         assert txtResult != null : "fx:id=\"txtResult\" was not injected: check your FXML file 'Artsmia.fxml'.";
 
     }
+    
 }
